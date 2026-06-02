@@ -1,0 +1,13 @@
+package year2026.month6.mcpweatherserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class McpWeatherServerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(McpWeatherServerApplication.class, args);
+    }
+
+}
