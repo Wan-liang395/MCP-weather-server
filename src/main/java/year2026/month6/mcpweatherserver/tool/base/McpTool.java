@@ -8,22 +8,22 @@ import java.util.Map;
  */
 public interface McpTool {
     /**
-     * 工具名称。
+     * 工具名称
      */
     String getName();
 
     /**
-     * 工具描述。
+     * 工具描述
      */
     String getDescription();
 
     /**
-     * 工具的入参定义 (严格符合 JSON Schema 规范)。
+     * 工具的入参定义 (严格符合 JSON Schema 规范)
      */
     Map<String, Object> getInputSchema();
 
     /**
-     * 核心执行逻辑。
+     * 核心执行逻辑
      * @param arguments 大模型解析并传过来的具体参数
      * @return 返回给大模型的最终文本结果
      */
