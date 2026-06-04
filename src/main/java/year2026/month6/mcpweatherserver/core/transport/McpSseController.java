@@ -2,7 +2,6 @@ package year2026.month6.mcpweatherserver.core.transport;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -10,6 +9,8 @@ import year2026.month6.mcpweatherserver.core.model.McpRequest;
 import year2026.month6.mcpweatherserver.core.model.McpResponse;
 import year2026.month6.mcpweatherserver.core.registry.ToolRegistry;
 import year2026.month6.mcpweatherserver.tool.base.McpTool;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 import java.io.IOException;
@@ -27,6 +28,9 @@ public class McpSseController {
 
     private final ToolRegistry toolRegistry;
 
+
+    private final ObjectMapper objectMapper;
+
     // 维护所有正在连接的客户端，Key 是 sessionId
     private final Map<String, SseEmitter> connections = new ConcurrentHashMap<>();
 
@@ -34,9 +38,11 @@ public class McpSseController {
      *  1.建立长连接
      * 大模型首先通过 GET 请求这里,保持连接不断开
      */
-    @GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter connect(@RequestParam(defaultValue = "default-session") String sessionId){
+    @GetMapping(value = "/sse", produces = "text/event-stream;charset=UTF-8")
+    public SseEmitter connect(@RequestParam(defaultValue = "default-session") String sessionId,HttpServletResponse response){
         log.info("大模型客户端尝试建立连接，Session ID: {}", sessionId);
+
+        response.setCharacterEncoding("UTF-8");
 
         // 设置超时时间，这里设为 1 小时
         SseEmitter emitter = new SseEmitter(3600000L);
@@ -78,10 +84,13 @@ public class McpSseController {
 
         try {
             // 1.处理请求并打包结果
-            McpResponse response = processRequest(request);
+            McpResponse mcpResponse = processRequest(request);
 
             //2. 将结果通过刚才建立好的 SSE 通道推回给大模型
-            emitter.send(SseEmitter.event().name("message").data(response));
+
+            String jsonString = objectMapper.writeValueAsString(mcpResponse);
+            emitter.send(SseEmitter.event().name("message").data(jsonString));
+
             log.info("指令处理完毕，已推送结果回大模型。");
         } catch (Exception e) {
             log.error("处理消息时发生异常", e);
